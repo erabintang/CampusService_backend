@@ -1,0 +1,26 @@
+# Caddyfile — FrankenPHP untuk CampusService (Laravel 12)
+#
+# Cara menjalankan (dari root project):
+#   tools/frankenphp/frankenphp.exe run
+#
+# Fallback tetap tersedia:
+#   php artisan serve
+#
+# Melayani di http://127.0.0.1:8000 — sama dengan php artisan serve,
+# sehingga APP_URL di .env tidak perlu diubah.
+
+{
+	frankenphp
+	auto_https off
+}
+
+http://127.0.0.1:8000 {
+	# Webroot Laravel
+	root * public
+
+	# Kompresi (opsional)
+	encode zstd gzip
+
+	# Jalankan PHP dari public/ dan layani aset statis
+	php_server
+}
