@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\RelationCounts;
 use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
@@ -39,20 +40,43 @@ class DashboardController extends Controller
         });
 
         // Pendapatan per status.
-        $revenueByStatus = Order::query()
-            ->selectRaw('status, SUM(price) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        if (Order::isMongo()) {
+            // MongoDB: selectRaw/groupBy tidak didukung -> agregasi $group native.
+            $revenueByStatus = collect(Order::STATUSES)->mapWithKeys(fn ($status) => [$status => 0.0]);
 
-        $revenueByStatus = collect(Order::STATUSES)->mapWithKeys(
-            fn ($status) => [$status => (float) ($revenueByStatus[$status] ?? 0)]
-        );
+            foreach (Order::raw(fn ($collection) => $collection->aggregate([
+                ['$group' => ['_id' => '$status', 'total' => ['$sum' => '$price']]],
+            ])) as $row) {
+                $revenueByStatus[$row['_id']] = (float) $row['total'];
+            }
+        } else {
+            $revenueByStatus = Order::query()
+                ->selectRaw('status, SUM(price) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            $revenueByStatus = collect(Order::STATUSES)->mapWithKeys(
+                fn ($status) => [$status => (float) ($revenueByStatus[$status] ?? 0)]
+            );
+        }
 
         // Top 5 layanan terlaris (pesanan tidak dibatalkan).
-        $topProducts = Product::withCount(['orders' => fn ($query) => $query->where('status', '!=', 'cancelled')])
-            ->orderByDesc('orders_count')
-            ->limit(5)
-            ->get(['id', 'name', 'slug', 'stock']);
+        if (Product::isMongo()) {
+            $topProducts = Product::all();
+            RelationCounts::attachCount(
+                $topProducts,
+                'orders',
+                'product_id',
+                'orders_count',
+                fn ($query) => $query->where('status', '!=', 'cancelled')
+            );
+            $topProducts = $topProducts->sortByDesc('orders_count')->take(5)->values();
+        } else {
+            $topProducts = Product::withCount(['orders' => fn ($query) => $query->where('status', '!=', 'cancelled')])
+                ->orderByDesc('orders_count')
+                ->limit(5)
+                ->get(['id', 'name', 'slug', 'stock']);
+        }
 
         $latestOrders = Order::with(['user:id,name', 'product:id,name'])
             ->latest()

@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Order;
+use App\Services\OrderStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -84,21 +84,12 @@ class OrderController extends Controller
      */
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
     {
-        $oldStatus = $order->status;
-        $newStatus = $request->status;
-
-        DB::transaction(function () use ($order, $oldStatus, $newStatus) {
-            if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
-                $order->product()->increment('stock');
-            } elseif ($newStatus !== 'cancelled' && $oldStatus === 'cancelled') {
-                $order->product()->where('stock', '>', 0)->decrement('stock');
-            }
-
-            $order->update(['status' => $newStatus]);
-        });
+        // ValidationException (mis. slot penuh saat reaktivasi) otomatis
+        // menjadi respons JSON 422 oleh exception handler global.
+        (new OrderStatusService)->change($order, $request->status);
 
         return response()->json([
-            'message' => "Status pesanan {$order->order_code} diubah menjadi {$newStatus}.",
+            'message' => "Status pesanan {$order->order_code} diubah menjadi {$request->status}.",
             'data' => [
                 'id' => $order->id,
                 'order_code' => $order->order_code,

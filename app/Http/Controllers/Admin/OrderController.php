@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Order;
+use App\Services\OrderStatusService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -55,25 +56,15 @@ class OrderController extends Controller
      */
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order)
     {
-        $oldStatus = $order->status;
-        $newStatus = $request->status;
-
-        // Perubahan status + penyesuaian slot dilakukan atomik (DB::transaction)
-        // agar stok dan status selalu konsisten (tidak ada yang gagal separuh).
-        DB::transaction(function () use ($order, $oldStatus, $newStatus) {
-            if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
-                // Order dibatalkan: slot dibebaskan kembali.
-                $order->product()->increment('stock');
-            } elseif ($newStatus !== 'cancelled' && $oldStatus === 'cancelled') {
-                // Order diaktifkan kembali: slot dipakai lagi (jika masih tersedia).
-                $order->product()->where('stock', '>', 0)->decrement('stock');
-            }
-
-            $order->update(['status' => $newStatus]);
-        });
+        try {
+            (new OrderStatusService)->change($order, $request->status);
+        } catch (ValidationException $e) {
+            // Slot penuh saat mengaktifkan kembali pesanan yang dibatalkan.
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('admin.orders.show', $order)
-            ->with('success', "Status pesanan {$order->order_code} diubah menjadi {$newStatus}.");
+            ->with('success', "Status pesanan {$order->order_code} diubah menjadi {$request->status}.");
     }
 }

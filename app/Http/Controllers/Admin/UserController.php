@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Support\RelationCounts;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,6 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $users = User::query()
-            ->withCount('orders')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim();
                 $query->where(function ($q) use ($search) {
@@ -27,6 +27,8 @@ class UserController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
+        RelationCounts::attachCount($users->getCollection(), 'orders', 'user_id', 'orders_count');
 
         return view('admin.users.index', compact('users'));
     }
@@ -90,6 +92,13 @@ class UserController extends Controller
             return redirect()
                 ->route('admin.users.index')
                 ->with('error', 'Akun admin tidak dapat dihapus.');
+        }
+
+        // MongoDB tidak punya FK constraint — cek manual agar perilaku sama.
+        if (User::isMongo() && $user->orders()->exists()) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'User tidak dapat dihapus karena masih memiliki pesanan.');
         }
 
         try {

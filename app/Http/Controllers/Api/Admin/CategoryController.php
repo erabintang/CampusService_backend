@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Support\RelationCounts;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,6 @@ class CategoryController extends Controller
     public function index(Request $request): JsonResponse
     {
         $categories = Category::query()
-            ->withCount('products')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim();
                 $query->where(function ($q) use ($search) {
@@ -29,6 +29,8 @@ class CategoryController extends Controller
             ->latest()
             ->paginate(min((int) $request->integer('per_page', 10) ?: 10, 100))
             ->withQueryString();
+
+        RelationCounts::attachCount($categories->getCollection(), 'products', 'category_id', 'products_count');
 
         return response()->json([
             'data' => collect($categories->items())->map(fn (Category $category) => [
@@ -87,6 +89,13 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): JsonResponse
     {
+        // MongoDB tidak punya FK constraint — cek manual agar perilaku sama.
+        if (Category::isMongo() && $category->products()->exists()) {
+            return response()->json([
+                'message' => 'Kategori tidak dapat dihapus karena masih memiliki produk.',
+            ], 409);
+        }
+
         try {
             $category->delete();
         } catch (QueryException $e) {

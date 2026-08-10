@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\RelationCounts;
 
 class HomeController extends Controller
 {
@@ -13,12 +14,19 @@ class HomeController extends Controller
     public function index()
     {
         $categories = Category::where('status', true)
-            ->withCount(['products' => fn ($q) => $q->where('status', true)])
             ->orderBy('name')
             ->get();
 
+        RelationCounts::attachCount(
+            $categories,
+            'products',
+            'category_id',
+            'products_count',
+            fn ($q) => $q->where('status', true)
+        );
+
         $latestProducts = Product::where('status', true)
-            ->whereHas('category', fn ($q) => $q->where('status', true))
+            ->fromActiveCategory()
             ->with('category')
             ->latest()
             ->limit(8)

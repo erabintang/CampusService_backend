@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $products = Product::where('status', true)
-            ->whereHas('category', fn ($q) => $q->where('status', true))
+            ->fromActiveCategory()
             ->with('category')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim();
@@ -26,7 +26,8 @@ class ProductController extends Controller
                 });
             })
             ->when($request->filled('category_id'), function ($query) use ($request) {
-                $query->where('category_id', $request->integer('category_id'));
+                // String (bukan integer): di MongoDB id kategori berupa ObjectId.
+                $query->where('category_id', $request->input('category_id'));
             })
             ->latest()
             ->paginate((int) $request->integer('per_page', 9) ?: 9)
@@ -57,7 +58,7 @@ class ProductController extends Controller
             ->where('status', true)
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->whereHas('category', fn ($q) => $q->where('status', true))
+            ->fromActiveCategory()
             ->with('category')
             ->latest()
             ->limit(4)
