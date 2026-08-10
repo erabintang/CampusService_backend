@@ -22,5 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Auth\Middleware\RedirectIfAuthenticated::redirectUsing(fn () => route('home'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Endpoint /api/* selalu merespons JSON (termasuk error validasi),
+        // tanpa bergantung pada header Accept dari klien.
+        $exceptions->shouldRenderJsonWhen(function (\Illuminate\Http\Request $request, \Throwable $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
     })->create();

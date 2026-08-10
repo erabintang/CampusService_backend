@@ -39,6 +39,7 @@
                     ['label' => 'Kategori', 'route' => 'admin.categories.index', 'icon' => 'category'],
                     ['label' => 'User', 'route' => 'admin.users.index', 'icon' => 'users'],
                     ['label' => 'Pesanan', 'route' => 'admin.orders.index', 'icon' => 'orders'],
+                    ['label' => 'File Upload', 'route' => 'admin.uploads.index', 'icon' => 'reports'],
                     ['label' => 'Stok', 'route' => 'admin.products.index', 'icon' => 'stock'],
                     ['label' => 'Laporan', 'route' => 'admin.reports.index', 'icon' => 'reports'],
                 ];
