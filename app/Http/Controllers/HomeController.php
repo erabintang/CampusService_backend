@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Support\RelationCounts;
 
 class HomeController extends Controller
 {
@@ -17,13 +16,7 @@ class HomeController extends Controller
             ->orderBy('name')
             ->get();
 
-        RelationCounts::attachCount(
-            $categories,
-            'products',
-            'category_id',
-            'products_count',
-            fn ($q) => $q->where('status', true)
-        );
+        $categories->loadCount(['products' => fn ($q) => $q->where('status', true)]);
 
         $latestProducts = Product::where('status', true)
             ->fromActiveCategory()

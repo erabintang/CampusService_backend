@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HandlesMongoConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class Upload extends Model
 {
-    use HandlesMongoConnection;
     public const STATUS_PENDING = 'pending';
     public const STATUS_UPLOADING = 'uploading';
     public const STATUS_PAUSED = 'paused';

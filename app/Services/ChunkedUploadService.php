@@ -153,32 +153,6 @@ class ChunkedUploadService
         }
 
         // Catat index chunk di database secara atomik (cegah duplikat akibat race).
-        if (Upload::isMongo()) {
-            // MongoDB (Atlas M0 tanpa transaction/lockForUpdate): $addToSet
-            // atomik — index hanya ditambahkan bila belum ada; $inc menjaga
-            // counter tanpa read-modify-write. Duplikat tidak merusak data.
-            $affected = $upload->getConnection()
-                ->table($upload->getTable())
-                ->where('_id', $upload->getKey())
-                ->whereIn('status', [Upload::STATUS_PENDING, Upload::STATUS_UPLOADING, Upload::STATUS_PAUSED])
-                ->update([
-                    '$addToSet' => ['chunks_received' => $index],
-                    '$set' => ['status' => Upload::STATUS_UPLOADING],
-                ]);
-
-            if ($affected !== 1) {
-                // Konkurensi: chunk lain sudah mencatat index yang sama -> buang duplikat.
-                $upload->disk()->delete($chunkPath);
-            } else {
-                $upload->getConnection()
-                    ->table($upload->getTable())
-                    ->where('_id', $upload->getKey())
-                    ->update(['$inc' => ['uploaded_chunks' => 1]]);
-            }
-
-            return $upload->refresh();
-        }
-
         DB::transaction(function () use ($upload, $index, $chunkPath) {
             $fresh = Upload::lockForUpdate()->findOrFail($upload->id);
             $received = $fresh->chunks_received ?? [];

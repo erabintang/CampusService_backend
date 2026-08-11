@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HandlesMongoConnection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use Illuminate\Support\Str;
 
 class Product extends Model
 {
-    use HasFactory, HandlesMongoConnection;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -42,9 +41,8 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            // float (bukan decimal:2): MySQL menyimpan DECIMAL, MongoDB tidak
-            // punya tipe DECIMAL — decimal:2 disimpan sebagai string dan akan
-            // menggagalkan agregasi $sum di MongoDB.
+            // float (bukan decimal:2): konsisten dengan agregasi SUM() di
+            // dashboard, dan menghindari konversi tipe pada frontend.
             'price' => 'float',
             'stock' => 'integer',
             'status' => 'boolean',
@@ -69,16 +67,9 @@ class Product extends Model
 
     /**
      * Scope: hanya produk yang kategorinya aktif.
-     *
-     * MongoDB tidak mendukung whereHas (error 500), jadi di koneksi MongoDB
-     * dipakai whereIn terhadap id kategori aktif — hasilnya identik.
      */
     public function scopeFromActiveCategory(Builder $query): Builder
     {
-        if (static::isMongo()) {
-            return $query->whereIn('category_id', Category::where('status', true)->pluck('id'));
-        }
-
         return $query->whereHas('category', fn ($q) => $q->where('status', true));
     }
 

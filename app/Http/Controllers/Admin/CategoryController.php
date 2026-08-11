@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
-use App\Support\RelationCounts;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
@@ -28,7 +27,7 @@ class CategoryController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        RelationCounts::attachCount($categories->getCollection(), 'products', 'category_id', 'products_count');
+        $categories->getCollection()->loadCount('products');
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -89,13 +88,6 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        // MongoDB tidak punya FK constraint — cek manual agar perilaku sama.
-        if (Category::isMongo() && $category->products()->exists()) {
-            return redirect()
-                ->route('admin.categories.index')
-                ->with('error', 'Kategori tidak dapat dihapus karena masih memiliki produk.');
-        }
-
         try {
             $category->delete();
         } catch (QueryException $e) {

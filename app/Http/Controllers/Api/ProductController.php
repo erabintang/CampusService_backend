@@ -26,7 +26,6 @@ class ProductController extends Controller
                 });
             })
             ->when($request->filled('category_id'), function ($query) use ($request) {
-                // String (bukan integer): di MongoDB id kategori berupa ObjectId.
                 $query->where('category_id', $request->input('category_id'));
             })
             ->latest()
