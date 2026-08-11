@@ -29,10 +29,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Config files (nginx, php.ini, supervisord)
+# Config files (nginx, php.ini, supervisord, entrypoint)
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-campus.ini
 COPY docker/nginx.conf /etc/nginx/sites-enabled/default
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/entrypoint.sh /usr/local/bin/campus-entrypoint
+RUN chmod +x /usr/local/bin/campus-entrypoint
 
 # Application source (vendor/.env excluded via .dockerignore)
 COPY . .
@@ -47,4 +49,4 @@ COPY --from=assets /build/public/build /var/www/html/public/build
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/local/bin/campus-entrypoint"]
