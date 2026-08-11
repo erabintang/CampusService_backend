@@ -1,0 +1,12 @@
+# Jangan upload ke Vercel: dependensi diinstall saat build, data lokal & rahasia tidak boleh bocor.
+/vendor
+/node_modules
+/.env
+/.env.*
+/.freebuff
+/storage/app/private
+/storage/app/public
+/storage/logs
+/public/build
+/public/storage
+/tests
