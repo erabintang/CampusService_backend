@@ -14,5 +14,5 @@
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
   "installCommand": "composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist",
-  "buildCommand": "mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs"
+  "buildCommand": "npm ci --no-audit --no-fund && npm run build && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs"
 }
