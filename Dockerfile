@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
         libonig-dev \
         libxml2-dev \
+        libicu-dev \
     && docker-php-ext-install -j$(nproc) pdo_mysql mbstring exif pcntl bcmath intl zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
