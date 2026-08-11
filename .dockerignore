@@ -1,0 +1,37 @@
+.git
+.gitignore
+
+# credentials / secrets - NEVER ship
+.env
+.env.*
+!.env.example
+*.sql
+*.dump
+
+# composer / npm - installed inside image
+vendor
+node_modules
+
+# local storage content
+storage/*
+!storage/.gitignore
+
+# vite build output (rebuilt in image)
+public/build
+public/hot
+
+# tests & local tooling
+tests
+tools
+phpunit.xml
+
+# Vercel-only files (not used on Railway)
+vercel.json
+.vercelignore
+api
+.vscode
+
+# misc
+*.md
+.freebuff
+.deployment

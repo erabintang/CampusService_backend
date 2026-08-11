@@ -35,6 +35,13 @@ Route::get('/dashboard', function () {
 
 // ===== API publik (tanpa login) =====
 Route::prefix('api')->name('api.')->group(function () {
+    // Token CSRF untuk SPA lintas-origin (frontend di domain lain tidak bisa
+    // membaca cookie XSRF-TOKEN via document.cookie; token dikembalikan JSON
+    // dan dipakai sebagai header X-XSRF-TOKEN — CSRF tetap aktif).
+    Route::get('/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('csrf-token');
+
     Route::get('/products', [ApiProductController::class, 'index'])->name('products.index');
     Route::get('/products/{product:slug}', [ApiProductController::class, 'show'])->name('products.show');
     Route::get('/categories', [ApiCategoryController::class, 'index'])->name('categories.index');
