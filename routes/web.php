@@ -36,8 +36,8 @@ Route::get('/dashboard', function () {
 // ===== API publik (tanpa login) =====
 Route::prefix('api')->name('api.')->group(function () {
     // Token CSRF untuk SPA lintas-origin (frontend di domain lain tidak bisa
-    // membaca cookie XSRF-TOKEN via document.cookie; token dikembalikan JSON
-    // dan dipakai sebagai header X-XSRF-TOKEN — CSRF tetap aktif).
+    // membaca cookie XSRF-TOKEN via document.cookie; token mentah dikirim
+    // ulang sebagai header X-CSRF-TOKEN — CSRF tetap aktif).
     Route::get('/csrf-token', function () {
         return response()->json(['token' => csrf_token()]);
     })->name('csrf-token');
