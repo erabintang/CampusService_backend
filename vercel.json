@@ -13,6 +13,6 @@
     { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
-  "installCommand": "composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist",
-  "buildCommand": "npm ci --no-audit --no-fund && npm run build && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs"
+  "installCommand": "npm ci --no-audit --no-fund",
+  "buildCommand": "npm run build && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs"
 }
