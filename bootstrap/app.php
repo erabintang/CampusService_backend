@@ -16,13 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // HTTPS. Trust proxies: skema/protocol asli diambil dari header
         // X-Forwarded-* sehingga asset()/url()/redirect() menghasilkan https://
         // (mencegah mixed-content yang memblokir CSS/JS di produksi).
+        // Hanya FOR/PROTO/PORT: host tidak di-trust (APP_URL sudah mematok host),
+        // menghindari host-header spoofing.
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR
-                | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT
                 | Request::HEADER_X_FORWARDED_PROTO
-                | Request::HEADER_X_FORWARDED_AWS_ELB
         );
 
         $middleware->alias([
