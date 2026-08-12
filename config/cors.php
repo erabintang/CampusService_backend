@@ -25,7 +25,17 @@ return [
         explode(',', (string) env('FRONTEND_URL', 'http://127.0.0.1:3000,http://localhost:3000'))
     ))),
 
-    'allowed_origins_patterns' => [],
+    // Origin frontend yang di-deploy (Vercel, tunnel Cloudflare, Railway)
+    // otomatis diizinkan — tidak perlu update FRONTEND_URL setiap deploy.
+    // CATATAN: pola ini dijalankan via preg_match (fruitcake/php-cors),
+    // jadi harus berupa REGEX lengkap dengan delimiter (#), bukan Str::is.
+    'allowed_origins_patterns' => [
+        '#^https://[a-z0-9-]+\.vercel\.app$#i',
+        '#^https://[a-z0-9-]+\.trycloudflare\.com$#i',
+        '#^https://[a-z0-9-]+\.railway\.app$#i',
+        '#^http://localhost(:\d+)?$#i',
+        '#^http://127\.0\.0\.1(:\d+)?$#i',
+    ],
 
     'allowed_headers' => ['*'],
 
