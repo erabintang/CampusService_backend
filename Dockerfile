@@ -4,6 +4,8 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY vite.config.js ./
+COPY postcss.config.js ./
+COPY tailwind.config.js ./
 COPY resources ./resources
 RUN npm run build
 
